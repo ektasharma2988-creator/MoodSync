@@ -1,0 +1,132 @@
+[
+    {
+        "id": 1,
+        "title": "Ilahi",
+        "artist": "Arijit Singh",
+        "genre": "Bollywood",
+        "year": 2013,
+        "moods": [
+            "Happy",
+            "Energetic"
+        ]
+    },
+    {
+        "id": 2,
+        "title": "Love You Zindagi",
+        "artist": "Amit Trivedi",
+        "genre": "Bollywood",
+        "year": 2014,
+        "moods": [
+            "Happy",
+            "Calm"
+        ]
+    },
+    {
+        "id": 3,
+        "title": "Agar Tum Saath Ho",
+        "artist": "Alka Yagnik & Arijit Singh",
+        "genre": "Bollywood",
+        "year": 2015,
+        "moods": [
+            "Sad",
+            "Romantic"
+        ]
+    },
+    {
+        "id": 4,
+        "title": "Kun Faya Kun",
+        "artist": "A.R. Rahman",
+        "genre": "Sufi",
+        "year": 2011,
+        "moods": [
+            "Calm"
+        ]
+    },
+    {
+        "id": 5,
+        "title": "Tum Se Hi",
+        "artist": "Mohit Chauhan",
+        "genre": "Bollywood",
+        "year": 2007,
+        "moods": [
+            "Romantic",
+            "Sad"
+        ]
+    },
+    {
+        "id": 6,
+        "title": "Zinda",
+        "artist": "Siddharth Mahadevan",
+        "genre": "Bollywood",
+        "year": 2013,
+        "moods": [
+            "Energetic",
+            "Angry"
+        ]
+    },
+    {
+        "id": 7,
+        "title": "Lose Yourself",
+        "artist": "Eminem",
+        "genre": "Hip Hop",
+        "year": 2002,
+        "moods": [
+            "Energetic",
+            "Angry"
+        ]
+    },
+    {
+        "id": 8,
+        "title": "Lovely",
+        "artist": "Billie Eilish & Khalid",
+        "genre": "Pop",
+        "year": 2018,
+        "moods": [
+            "Sad",
+            "Calm"
+        ]
+    },
+    {
+        "id": 9,
+        "title": "Perfect",
+        "artist": "Ed Sheeran",
+        "genre": "Pop",
+        "year": 2017,
+        "moods": [
+            "Romantic",
+            "Calm"
+        ]
+    },
+    {
+        "id": 10,
+        "title": "Weightless",
+        "artist": "Marconi Union",
+        "genre": "Ambient",
+        "year": 2011,
+        "moods": [
+            "Calm"
+        ]
+    },
+    {
+        "id": 11,
+        "title": "Believer",
+        "artist": "Imagine Dragons",
+        "genre": "Rock",
+        "year": 2017,
+        "moods": [
+            "Angry",
+            "Energetic"
+        ]
+    },
+    {
+        "id": 12,
+        "title": "Thunder",
+        "artist": "Imagine Dragons",
+        "genre": "Rock",
+        "year": 2017,
+        "moods": [
+            "Energetic",
+            "Happy"
+        ]
+    }
+]

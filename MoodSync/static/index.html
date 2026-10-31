@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoodSync - music for your mood</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A7%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --a: #7b6cf6; --b: #4a3fb5;
+    --bg: #0e0f1c; --card: rgba(255,255,255,.06); --card-hover: rgba(255,255,255,.1);
+    --line: rgba(255,255,255,.12); --text: #f3f3fa; --muted: #a6a8c4; --danger: #ff6b6b;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text); background: var(--bg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding-bottom: 110px; line-height: 1.45;
+  }
+  body::before {            /* mood-coloured glow behind everything */
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(900px 520px at 10% -8%, var(--a), transparent 62%),
+      radial-gradient(800px 480px at 105% 0%, var(--b), transparent 60%);
+    opacity: .42; transition: opacity .4s;
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  h1, h2, h3, p { margin: 0; }
+
+  /* ---------- header ---------- */
+  header {
+    position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px);
+    background: rgba(14,15,28,.72); border-bottom: 1px solid var(--line);
+  }
+  .bar { max-width: 1100px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .logo { font-weight: 800; font-size: 1.35rem; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
+  .logo span { background: linear-gradient(90deg, var(--a), var(--b)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: brightness(1.5); }
+  nav { display: flex; gap: 4px; flex: 1; overflow-x: auto; }
+  nav button { background: none; border: 0; padding: 8px 14px; border-radius: 999px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  nav button:hover { color: var(--text); background: var(--card); }
+  nav button.active { color: #fff; background: var(--card-hover); box-shadow: inset 0 0 0 1px var(--line); }
+  .user-chip { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 8px; display: flex; align-items: center; gap: 8px; }
+  .user-chip:hover { background: var(--card-hover); }
+  .avatar { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(135deg, var(--a), var(--b)); display: grid; place-items: center; font-weight: 700; font-size: .8rem; }
+
+  main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; }
+  section.view { display: none; animation: fade .3s ease; }
+  section.view.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  .title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -.02em; }
+  .sub { color: var(--muted); margin-top: 6px; }
+  .head-row { display: flex; align-items: end; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+
+  /* ---------- mood picker ---------- */
+  .moods { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; margin: 24px 0 32px; }
+  .mood-btn {
+    border: 0; border-radius: var(--radius); padding: 20px 14px; text-align: left; color: #fff;
+    background: linear-gradient(135deg, var(--ma), var(--mb)); position: relative; overflow: hidden;
+    transition: transform .15s, box-shadow .15s; box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  }
+  .mood-btn:hover { transform: translateY(-3px) scale(1.02); }
+  .mood-btn.active { box-shadow: 0 0 0 3px #fff, 0 10px 28px rgba(0,0,0,.4); }
+  .mood-btn .emoji { font-size: 2.1rem; display: block; margin-bottom: 8px; }
+  .mood-btn .name { font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,.35); }
+
+  /* ---------- songs ---------- */
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .input, select.input {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; outline: none; min-width: 0;
+  }
+  .input:focus { border-color: var(--a); box-shadow: 0 0 0 3px color-mix(in srgb, var(--a) 35%, transparent); }
+  select.input option { background: #1a1b2e; }
+  .btn { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 10px 16px; font-weight: 600; }
+  .btn:hover { background: var(--card-hover); }
+  .btn.primary { background: linear-gradient(135deg, var(--a), var(--b)); border-color: transparent; color: #fff; }
+  .btn.primary:hover { filter: brightness(1.12); }
+  .btn.danger { color: var(--danger); }
+
+  .song-list { display: grid; gap: 10px; margin-top: 14px; }
+  .song { display: flex; align-items: center; gap: 14px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; transition: background .15s; }
+  .song:hover { background: var(--card-hover); }
+  .song.playing { border-color: var(--a); box-shadow: 0 0 0 1px var(--a); }
+  .art { width: 52px; height: 52px; border-radius: 12px; display: grid; place-items: center; font-size: 1.5rem; flex: none; }
+  .info { flex: 1; min-width: 0; }
+  .info h3 { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .info p { color: var(--muted); font-size: .88rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .chip { font-size: .72rem; padding: 2px 9px; border-radius: 999px; background: rgba(255,255,255,.1); color: #dcdcf0; }
+  .actions { display: flex; gap: 6px; flex: none; }
+  .icon-btn { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: transparent; display: grid; place-items: center; font-size: 1rem; }
+  .icon-btn:hover { background: var(--card-hover); }
+  .icon-btn.play { background: #fff; color: #111; border-color: #fff; }
+  .icon-btn.on { color: #ff5c8a; border-color: #ff5c8a; background: rgba(255,92,138,.12); }
+  .empty { text-align: center; color: var(--muted); padding: 40px 10px; border: 1px dashed var(--line); border-radius: var(--radius); margin-top: 14px; }
+
+  /* ---------- playlists & history ---------- */
+  .pl-grid { display: grid; gap: 18px; }
+  .pl-card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; }
+  .pl-card header { position: static; background: none; backdrop-filter: none; border: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .pl-card h3 { font-size: 1.15rem; }
+  .pl-card .song { background: transparent; border-color: transparent; padding: 8px 4px; }
+  .pl-card .song:hover { background: var(--card); }
+  .stat-row { display: grid; grid-template-columns: 110px 1fr 40px; gap: 12px; align-items: center; margin: 10px 0; }
+  .bar-track { height: 12px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--ma), var(--mb)); }
+  .hist-item { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .hist-item time { color: var(--muted); font-size: .82rem; white-space: nowrap; }
+  .two-col { display: grid; grid-template-columns: 1fr 1.3fr; gap: 20px; }
+  @media (max-width: 760px) { .two-col { grid-template-columns: 1fr; } .actions .hide-sm { display: none; } }
+
+  /* ---------- player ---------- */
+  #player {
+    position: fixed; left: 50%; bottom: 16px; transform: translate(-50%, 140%); transition: transform .35s;
+    width: min(680px, calc(100% - 28px)); z-index: 30; display: flex; align-items: center; gap: 14px;
+    background: rgba(24,25,44,.92); backdrop-filter: blur(14px); border: 1px solid var(--line);
+    border-radius: 18px; padding: 12px 16px; box-shadow: 0 14px 40px rgba(0,0,0,.5);
+  }
+  #player.show { transform: translate(-50%, 0); }
+  #player .meta { flex: 1; min-width: 0; }
+  #audioPlayer { width: 250px; height: 38px; }
+  @media (max-width: 760px) { #audioPlayer { width: 180px; } }
+  #player .meta strong, #player .meta small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #player small { color: var(--muted); }
+  .eq { display: flex; align-items: end; gap: 3px; height: 24px; }
+  .eq i { width: 4px; background: linear-gradient(var(--a), var(--b)); border-radius: 2px; animation: eq 0.9s ease-in-out infinite; filter: brightness(1.6); }
+  .eq i:nth-child(2) { animation-delay: .15s; } .eq i:nth-child(3) { animation-delay: .3s; } .eq i:nth-child(4) { animation-delay: .45s; }
+  @keyframes eq { 0%,100% { height: 20%; } 50% { height: 100%; } }
+  #player.stopped .eq i { animation-play-state: paused; }
+
+  /* ---------- dialogs & toast ---------- */
+  dialog { border: 1px solid var(--line); border-radius: 20px; background: #17182b; color: var(--text); padding: 24px; width: min(480px, calc(100% - 28px)); }
+  dialog::backdrop { background: rgba(5,5,12,.65); backdrop-filter: blur(4px); }
+  dialog h2 { margin-bottom: 14px; }
+  .field { display: grid; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: .85rem; color: var(--muted); }
+  .field-row { display: grid; grid-template-columns: 1fr 120px; gap: 10px; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+  .chip-pick { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip-pick button { border: 1px solid var(--line); background: transparent; border-radius: 999px; font-size: .78rem; padding: 3px 10px; color: var(--muted); }
+  .chip-pick button:hover { color: #fff; background: var(--card-hover); }
+  .pl-choice { display: block; width: 100%; text-align: left; margin-bottom: 8px; }
+  #toast { position: fixed; top: 76px; left: 50%; transform: translate(-50%, -20px); opacity: 0; transition: .25s; z-index: 60; background: #fff; color: #111; padding: 10px 18px; border-radius: 999px; font-weight: 600; pointer-events: none; max-width: calc(100% - 30px); }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #toast.error { background: var(--danger); color: #fff; }
+  footer.note { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <div class="logo">🎧 <span>MoodSync</span></div>
+    <nav id="tabs">
+      <button data-tab="discover" class="active">Discover</button>
+      <button data-tab="library">Library</button>
+      <button data-tab="playlists">Playlists</button>
+      <button data-tab="history">History</button>
+    </nav>
+    <button class="user-chip" id="userChip" title="Switch user"><span class="avatar" id="avatar">?</span><span id="userName">Sign in</span></button>
+  </div>
+</header>
+
+<main>
+  <!-- DISCOVER -->
+  <section class="view active" id="view-discover">
+    <h1 class="title" id="greeting">How are you feeling today?</h1>
+    <p class="sub">Pick a mood and MoodSync will line up songs to match.</p>
+    <div class="moods" id="moodGrid"></div>
+
+    <div id="resultsWrap" hidden>
+      <div class="head-row">
+        <div>
+          <h2 id="resultsTitle"></h2>
+          <p class="sub">Favorites rank higher; songs you just played rank lower.</p>
+        </div>
+        <div class="toolbar">
+          <select class="input" id="discoverGenre"><option value="">Any genre</option></select>
+          <button class="btn primary" id="shuffleBtn">⟳ Shuffle picks</button>
+        </div>
+      </div>
+      <div class="song-list" id="results"></div>
+    </div>
+  </section>
+
+  <!-- LIBRARY -->
+  <section class="view" id="view-library">
+    <div class="head-row">
+      <div><h1 class="title">Song library</h1><p class="sub" id="libCount"></p></div>
+      <button class="btn primary" id="addSongBtn">＋ Add song</button>
+    </div>
+    <div class="toolbar">
+      <input class="input" id="searchBox" type="search" placeholder="Search title, artist, genre or mood…" style="flex:1; min-width:220px">
+      <select class="input" id="libMood"><option value="">All moods</option></select>
+      <select class="input" id="libGenre"><option value="">All genres</option></select>
+    </div>
+    <div class="song-list" id="libList"></div>
+  </section>
+
+  <!-- PLAYLISTS -->
+  <section class="view" id="view-playlists">
+    <div class="head-row">
+      <div><h1 class="title">Your playlists</h1><p class="sub">Favorites and custom playlists, saved for your account.</p></div>
+      <div class="toolbar">
+        <input class="input" id="newPlName" placeholder="New playlist name" maxlength="60">
+        <button class="btn primary" id="newPlBtn">Create</button>
+      </div>
+    </div>
+    <div class="pl-grid" id="plGrid"></div>
+  </section>
+
+  <!-- HISTORY -->
+  <section class="view" id="view-history">
+    <div class="head-row">
+      <div><h1 class="title">Listening history</h1><p class="sub" id="histSub"></p></div>
+      <button class="btn danger" id="clearHistBtn">Clear history</button>
+    </div>
+    <div class="two-col">
+      <div class="pl-card"><h3>Mood breakdown</h3><div id="stats"></div></div>
+      <div class="pl-card"><h3>Recent plays</h3><div id="histList"></div></div>
+    </div>
+  </section>
+
+  <footer class="note">MoodSync · songs and playlists are stored locally in JSON files · music playback powered by Jamendo</footer>
+</main>
+
+<!-- now playing -->
+<div id="player">
+  <div class="eq"><i></i><i></i><i></i><i></i></div>
+  <div class="meta"><strong id="npTitle">-</strong><small id="npArtist">-</small></div>
+  <audio id="audioPlayer" controls preload="none"></audio>
+  <button class="icon-btn" id="npStop" title="Close player">✕</button>
+</div>
+
+<!-- dialogs -->
+<dialog id="userDlg">
+  <form id="userForm">
+    <h2>Welcome to MoodSync 👋</h2>
+    <p class="sub" style="margin-bottom:14px">Enter your name so your playlists and history stay yours.</p>
+    <div class="field"><input class="input" id="userInput" maxlength="40" placeholder="Your name" autocomplete="off" required></div>
+    <div class="chip-pick" id="userPick"></div>
+    <div class="dlg-actions"><button class="btn primary" type="submit">Continue</button></div>
+  </form>
+</dialog>
+
+<dialog id="songDlg">
+  <form id="songForm">
+    <h2 id="songDlgTitle">Add a song</h2>
+    <div class="field"><label for="fTitle">Title</label><input class="input" id="fTitle" required maxlength="120"></div>
+    <div class="field"><label for="fArtist">Artist</label><input class="input" id="fArtist" required maxlength="120"></div>
+    <div class="field field-row">
+      <div class="field" style="margin:0"><label for="fGenre">Genre</label><input class="input" id="fGenre" list="genreList" maxlength="60"><datalist id="genreList"></datalist></div>
+      <div class="field" style="margin:0"><label for="fYear">Year</label><input class="input" id="fYear" type="number" min="1000" max="2100" required></div>
+    </div>
+    <div class="field"><label for="fMoods">Moods (comma-separated, first is the main one)</label><input class="input" id="fMoods" required placeholder="Happy, Energetic"></div>
+    <div class="chip-pick" id="moodPick"></div>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="songCancel">Cancel</button>
+      <button class="btn primary" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="plDlg">
+  <h2>Add to playlist</h2>
+  <div id="plChoices"></div>
+  <div class="field" style="margin-top:10px"><label for="plNew">Or create a new playlist</label>
+    <div class="toolbar"><input class="input" id="plNew" maxlength="60" placeholder="Playlist name" style="flex:1"><button class="btn primary" id="plNewBtn" type="button">Create & add</button></div>
+  </div>
+  <div class="dlg-actions"><button class="btn" id="plClose" type="button">Close</button></div>
+</dialog>
+
+<div id="toast" role="status"></div>
+
+<script>
+"use strict";
+
+/* ------------------------------------------------------------------ */
+/* helpers                                                             */
+/* ------------------------------------------------------------------ */
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => [...document.querySelectorAll(s)];
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+async function api(method, url, body) {
+  const res = await fetch(url, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || "Something went wrong.");
+  return data;
+}
+
+let toastTimer;
+function toast(msg, isError = false) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.className = "show" + (isError ? " error" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.className = ""), 2400);
+}
+const guard = (fn) => async (...args) => { try { return await fn(...args); } catch (e) { toast(e.message, true); } };
+
+/* mood look & feel: [emoji, colour A, colour B] */
+const MOOD_META = {
+  Happy: ["😊", "#f7b733", "#fc4a1a"], Sad: ["😢", "#4b79a1", "#283e51"],
+  Calm: ["😌", "#56ab91", "#2c7a7b"], Angry: ["😠", "#e52d27", "#8e1015"],
+  Romantic: ["💖", "#ee7aa0", "#a8326b"], Energetic: ["⚡", "#f9a825", "#ff4e50"],
+  Focused: ["🎯", "#6a85b6", "#3a4e7a"], Nostalgic: ["📻", "#c79081", "#7c5a4b"],
+};
+const moodMeta = (m) => MOOD_META[m] || ["🎵", "#7b6cf6", "#4a3fb5"];
+
+/* ------------------------------------------------------------------ */
+/* state                                                               */
+/* ------------------------------------------------------------------ */
+const state = {
+  user: localStorage.getItem("moodsync_user") || "",
+  moods: [], genres: [], users: [],
+  mood: null, results: [],
+  favorites: new Set(), playlists: {},
+  songs: new Map(),            // id -> song (so buttons can find the song)
+  playingId: null,
+  editingId: null,
+  pendingPlaylistSong: null,
+};
+
+function remember(songs) { songs.forEach((s) => state.songs.set(s.id, s)); }
+
+/* ------------------------------------------------------------------ */
+/* rendering                                                           */
+/* ------------------------------------------------------------------ */
+function songCard(song, ctx = {}) {
+  const [emoji, a, b] = moodMeta(song.moods[0]);
+  const fav = state.favorites.has(song.id);
+  const chips = song.moods.map((m) => `<span class="chip">${esc(m)}</span>`).join("");
+  const extra = ctx.library
+    ? `<button class="icon-btn hide-sm" data-act="edit" title="Edit">✎</button><button class="icon-btn hide-sm" data-act="delete" title="Delete">🗑</button>`
+    : "";
+  const remove = ctx.playlist ? `<button class="icon-btn" data-act="unlist" title="Remove from this list">✕</button>` : "";
+  return `
+  <article class="song ${state.playingId === song.id ? "playing" : ""}" data-id="${song.id}">
+    <div class="art" style="background:linear-gradient(135deg,${a},${b})">${emoji}</div>
+    <div class="info">
+      <h3>${esc(song.title)}</h3>
+      <p>${esc(song.artist)} · ${esc(song.genre)} · ${esc(song.year)}</p>
+      <div class="chips">${chips}</div>
+    </div>
+    <div class="actions">
+      <button class="icon-btn play" data-act="play" title="Play">▶</button>
+      <button class="icon-btn ${fav ? "on" : ""}" data-act="fav" title="Favorite">♥</button>
+      <button class="icon-btn" data-act="addpl" title="Add to playlist">＋</button>
+      ${extra}${remove}
+    </div>
+  </article>`;
+}
+
+function renderMoodGrid() {
+  $("#moodGrid").innerHTML = state.moods.map((m) => {
+    const [emoji, a, b] = moodMeta(m);
+    return `<button class="mood-btn ${state.mood === m ? "active" : ""}" data-mood="${esc(m)}" style="--ma:${a};--mb:${b}">
+      <span class="emoji">${emoji}</span><span class="name">${esc(m)}</span></button>`;
+  }).join("");
+}
+
+function fillSelect(sel, values, firstLabel) {
+  const current = sel.value;
+  sel.innerHTML = `<option value="">${firstLabel}</option>` + values.map((v) => `<option>${esc(v)}</option>`).join("");
+  sel.value = values.includes(current) ? current : "";
+}
+
+function applyTheme(mood) {
+  const [, a, b] = mood ? moodMeta(mood) : ["", "#7b6cf6", "#4a3fb5"];
+  document.documentElement.style.setProperty("--a", a);
+  document.documentElement.style.setProperty("--b", b);
+}
+
+function renderResults() {
+  const wrap = $("#resultsWrap");
+  wrap.hidden = !state.mood;
+  if (!state.mood) return;
+  $("#resultsTitle").textContent = `${moodMeta(state.mood)[0]}  Songs for a ${state.mood} mood`;
+  $("#results").innerHTML = state.results.length
+    ? state.results.map((s) => songCard(s)).join("")
+    : `<div class="empty">No ${esc(state.mood)} songs yet. Add some in the Library tab!</div>`;
+}
+
+async function renderLibrary() {
+  const q = encodeURIComponent($("#searchBox").value.trim());
+  const mood = encodeURIComponent($("#libMood").value);
+  const genre = encodeURIComponent($("#libGenre").value);
+  const { songs } = await api("GET", `/api/songs?q=${q}&mood=${mood}&genre=${genre}`);
+  remember(songs);
+  $("#libCount").textContent = `${songs.length} song${songs.length === 1 ? "" : "s"} shown`;
+  $("#libList").innerHTML = songs.length
+    ? songs.map((s) => songCard(s, { library: true })).join("")
+    : `<div class="empty">No songs match your search.</div>`;
+}
+
+function renderPlaylists() {
+  const favSongs = [...state.favorites].map((id) => state.songs.get(id)).filter(Boolean);
+  let html = `
+    <div class="pl-card" data-pl="__favorites__">
+      <header><h3>♥ Favorites <span class="sub">(${favSongs.length})</span></h3></header>
+      <div class="song-list">${favSongs.length ? favSongs.map((s) => songCard(s)).join("") : `<div class="empty">Tap ♥ on any song to save it here.</div>`}</div>
+    </div>`;
+  for (const [name, songs] of Object.entries(state.playlists)) {
+    html += `
+    <div class="pl-card" data-pl="${esc(name)}">
+      <header><h3>${esc(name)} <span class="sub">(${songs.length})</span></h3>
+        <span class="toolbar">
+          ${songs.length ? `<button class="btn" data-act="playall">▶ Play all</button>` : ""}
+          <button class="btn danger" data-act="delpl">Delete</button>
+        </span></header>
+      <div class="song-list">${songs.length ? songs.map((s) => songCard(s, { playlist: true })).join("") : `<div class="empty">Empty. Add songs with the ＋ button.</div>`}</div>
+    </div>`;
+  }
+  $("#plGrid").innerHTML = html;
+}
+
+function renderHistory(data) {
+  $("#histSub").textContent = `${data.total_plays} total play${data.total_plays === 1 ? "" : "s"}`;
+  const entries = Object.entries(data.stats).sort((x, y) => y[1] - x[1]);
+  const total = entries.reduce((n, [, c]) => n + c, 0) || 1;
+  $("#stats").innerHTML = entries.length
+    ? entries.map(([m, c]) => {
+        const [emoji, a, b] = moodMeta(m);
+        return `<div class="stat-row" style="--ma:${a};--mb:${b}"><span>${emoji} ${esc(m)}</span>
+          <div class="bar-track"><div class="bar-fill" style="width:${Math.max(4, (c / total) * 100)}%"></div></div><b>${c}</b></div>`;
+      }).join("")
+    : `<p class="sub" style="margin-top:10px">Play some mood-based picks to see your breakdown.</p>`;
+  $("#histList").innerHTML = data.history.length
+    ? data.history.map((h) => `<div class="hist-item"><div><b>${esc(h.title)}</b><br><span class="sub">${esc(h.artist)}${h.mood ? " · " + esc(h.mood) : ""}</span></div><time>${esc(h.played_at.replace("T", " "))}</time></div>`).join("")
+    : `<p class="sub" style="margin-top:10px">Nothing played yet.</p>`;
+}
+
+/* ------------------------------------------------------------------ */
+/* data loading                                                        */
+/* ------------------------------------------------------------------ */
+async function loadMeta() {
+  const meta = await api("GET", "/api/meta");
+  state.moods = meta.moods; state.genres = meta.genres; state.users = meta.users;
+  renderMoodGrid();
+  fillSelect($("#discoverGenre"), state.genres, "Any genre");
+  fillSelect($("#libMood"), state.moods, "All moods");
+  fillSelect($("#libGenre"), state.genres, "All genres");
+  $("#genreList").innerHTML = state.genres.map((g) => `<option value="${esc(g)}">`).join("");
+  $("#moodPick").innerHTML = state.moods.map((m) => `<button type="button" data-addmood="${esc(m)}">${esc(m)}</button>`).join("");
+}
+
+async function loadUser() {
+  const data = await api("GET", `/api/user?user=${encodeURIComponent(state.user)}`);
+  state.favorites = new Set(data.favorites);
+  state.playlists = data.playlists;
+  remember(data.favorite_songs);
+  Object.values(data.playlists).forEach(remember);
+  return data;
+}
+
+async function refreshActiveTab() {
+  const tab = $("#tabs .active").dataset.tab;
+  if (tab === "library") await renderLibrary();
+  if (tab === "playlists") { await loadUser(); renderPlaylists(); }
+  if (tab === "history") renderHistory(await loadUser());
+  if (tab === "discover") renderResults();
+}
+
+function setUser(name) {
+  state.user = name;
+  localStorage.setItem("moodsync_user", name);
+  $("#userName").textContent = name;
+  $("#avatar").textContent = name[0].toUpperCase();
+  $("#greeting").textContent = `How are you feeling today, ${name}?`;
+}
+
+/* ------------------------------------------------------------------ */
+/* actions                                                             */
+/* ------------------------------------------------------------------ */
+const discover = guard(async (mood) => {
+  state.mood = mood;
+  applyTheme(mood);
+  const genre = encodeURIComponent($("#discoverGenre").value);
+  const data = await api("GET", `/api/recommend?user=${encodeURIComponent(state.user)}&mood=${encodeURIComponent(mood)}&genre=${genre}&limit=6`);
+  state.results = data.songs;
+  remember(data.songs);
+  renderMoodGrid();
+  renderResults();
+  $("#resultsWrap").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+const playSong = guard(async (id) => {
+  const song = state.songs.get(id);
+  if (!song) return;
+
+  state.playingId = id;
+  $("#npTitle").textContent = song.title;
+  $("#npArtist").textContent = song.artist;
+  $("#player").className = "show";
+
+  $$(".song").forEach((el) => {
+    const rawId = el.dataset.id;
+    const elementId = state.songs.has(rawId) ? rawId : (state.songs.has(Number(rawId)) ? Number(rawId) : rawId);
+    el.classList.toggle("playing", elementId === id);
+  });
+
+  const audio = $("#audioPlayer");
+
+  if (song.audio) {
+    audio.pause();
+    audio.src = song.audio;
+    audio.load();
+
+    try {
+      await audio.play();
+    } catch (error) {
+      console.warn("Audio playback could not start automatically:", error);
+      toast("Press ▶ on the audio player to start the song.", true);
+    }
+  } else {
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+    toast("This song has no online audio available.", true);
+  }
+
+  await api("POST", "/api/play", {
+    user: state.user,
+    song_id: id,
+    mood: state.mood
+  });
+});
+
+const toggleFav = guard(async (id) => {
+  const { favorite } = await api("POST", "/api/favorite", { user: state.user, song_id: id });
+  favorite ? state.favorites.add(id) : state.favorites.delete(id);
+  toast(favorite ? "Added to favorites ♥" : "Removed from favorites");
+  $$(`.song[data-id="${id}"] [data-act="fav"]`).forEach((b) => b.classList.toggle("on", favorite));
+  if ($("#tabs .active").dataset.tab === "playlists") { await loadUser(); renderPlaylists(); }
+});
+
+function openPlaylistPicker(id) {
+  state.pendingPlaylistSong = id;
+  const names = Object.keys(state.playlists);
+  $("#plChoices").innerHTML = names.length
+    ? names.map((n) => `<button class="btn pl-choice" data-pick="${esc(n)}">${esc(n)}</button>`).join("")
+    : `<p class="sub">You have no playlists yet. Create one below.</p>`;
+  $("#plNew").value = "";
+  $("#plDlg").showModal();
+}
+
+const addToPlaylist = guard(async (playlist) => {
+  const { added } = await api("POST", "/api/playlists/add", { user: state.user, playlist, song_id: state.pendingPlaylistSong });
+  $("#plDlg").close();
+  toast(added ? `Added to "${playlist}"` : "Already in that playlist");
+  await loadUser();
+});
+
+const createPlaylist = guard(async (name, thenAdd = false) => {
+  name = name.trim();
+  if (!name) return toast("Give the playlist a name.", true);
+  await api("POST", "/api/playlists", { user: state.user, name });
+  await loadUser();
+  if (thenAdd) return addToPlaylist(name);
+  toast(`Created "${name}"`);
+  renderPlaylists();
+});
+
+function openSongDialog(song) {
+  state.editingId = song ? song.id : null;
+  $("#songDlgTitle").textContent = song ? "Edit song" : "Add a song";
+  $("#fTitle").value = song ? song.title : "";
+  $("#fArtist").value = song ? song.artist : "";
+  $("#fGenre").value = song ? song.genre : "";
+  $("#fYear").value = song ? song.year : new Date().getFullYear();
+  $("#fMoods").value = song ? song.moods.join(", ") : "";
+  $("#songDlg").showModal();
+  $("#fTitle").focus();
+}
+
+const saveSong = guard(async () => {
+  const body = {
+    title: $("#fTitle").value, artist: $("#fArtist").value, genre: $("#fGenre").value,
+    year: $("#fYear").value, moods: $("#fMoods").value,
+  };
+  if (state.editingId) await api("PUT", `/api/songs/${state.editingId}`, body);
+  else await api("POST", "/api/songs", body);
+  $("#songDlg").close();
+  toast(state.editingId ? "Song updated" : "Song added");
+  await loadMeta();
+  await renderLibrary();
+});
+
+const deleteSong = guard(async (id) => {
+  const song = state.songs.get(id);
+  if (!confirm(`Delete "${song.title}" by ${song.artist}? It will also leave playlists and favorites.`)) return;
+  await api("DELETE", `/api/songs/${id}`);
+  state.songs.delete(id); state.favorites.delete(id);
+  toast("Song deleted");
+  await loadMeta();
+  await renderLibrary();
+});
+
+const removeFromPlaylist = guard(async (playlist, id) => {
+  await api("POST", "/api/playlists/remove", { user: state.user, playlist, song_id: id });
+  await loadUser(); renderPlaylists();
+});
+
+/* ------------------------------------------------------------------ */
+/* events                                                              */
+/* ------------------------------------------------------------------ */
+$("#tabs").addEventListener("click", guard(async (e) => {
+  const btn = e.target.closest("button[data-tab]");
+  if (!btn) return;
+  $$("#tabs button").forEach((b) => b.classList.toggle("active", b === btn));
+  $$("section.view").forEach((v) => v.classList.toggle("active", v.id === `view-${btn.dataset.tab}`));
+  await refreshActiveTab();
+}));
+
+$("#moodGrid").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-mood]");
+  if (btn) discover(btn.dataset.mood);
+});
+$("#shuffleBtn").addEventListener("click", () => state.mood && discover(state.mood));
+$("#discoverGenre").addEventListener("change", () => state.mood && discover(state.mood));
+
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const card = btn.closest(".song");
+  const rawId = card ? card.dataset.id : null;
+  const id = rawId === null
+    ? null
+    : (state.songs.has(rawId) ? rawId : (state.songs.has(Number(rawId)) ? Number(rawId) : rawId));
+  const plBox = btn.closest("[data-pl]");
+  const plName = plBox ? plBox.dataset.pl : null;
+
+  if (act === "play") playSong(id);
+  else if (act === "fav") toggleFav(id);
+  else if (act === "addpl") openPlaylistPicker(id);
+  else if (act === "edit") openSongDialog(state.songs.get(id));
+  else if (act === "delete") deleteSong(id);
+  else if (act === "unlist") removeFromPlaylist(plName, id);
+  else if (act === "playall") {
+    const songs = state.playlists[plName] || [];
+    if (songs.length) { for (const s of songs) await playSong(s.id); toast(`Playing "${plName}"`); }
+  } else if (act === "delpl") {
+    if (!confirm(`Delete playlist "${plName}"?`)) return;
+    guard(async () => {
+      await api("POST", "/api/playlists/delete", { user: state.user, name: plName });
+      await loadUser(); renderPlaylists(); toast("Playlist deleted");
+    })();
+  }
+});
+
+/* library controls */
+let searchTimer;
+$("#searchBox").addEventListener("input", () => { clearTimeout(searchTimer); searchTimer = setTimeout(guard(renderLibrary), 200); });
+$("#libMood").addEventListener("change", guard(renderLibrary));
+$("#libGenre").addEventListener("change", guard(renderLibrary));
+$("#addSongBtn").addEventListener("click", () => openSongDialog(null));
+$("#songForm").addEventListener("submit", (e) => { e.preventDefault(); saveSong(); });
+$("#songCancel").addEventListener("click", () => $("#songDlg").close());
+$("#moodPick").addEventListener("click", (e) => {
+  const m = e.target.dataset.addmood;
+  if (!m) return;
+  const current = $("#fMoods").value.split(",").map((x) => x.trim()).filter(Boolean);
+  if (!current.map((x) => x.toLowerCase()).includes(m.toLowerCase())) current.push(m);
+  $("#fMoods").value = current.join(", ");
+});
+
+/* playlists */
+$("#newPlBtn").addEventListener("click", async () => { await createPlaylist($("#newPlName").value); $("#newPlName").value = ""; });
+$("#newPlName").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#newPlBtn").click(); });
+$("#plChoices").addEventListener("click", (e) => { const n = e.target.dataset.pick; if (n) addToPlaylist(n); });
+$("#plNewBtn").addEventListener("click", () => createPlaylist($("#plNew").value, true));
+$("#plClose").addEventListener("click", () => $("#plDlg").close());
+
+/* history */
+$("#clearHistBtn").addEventListener("click", guard(async () => {
+  if (!confirm("Clear your whole listening history?")) return;
+  await api("POST", "/api/history/clear", { user: state.user });
+  renderHistory(await loadUser());
+  toast("History cleared");
+}));
+
+/* player */
+$("#npStop").addEventListener("click", () => {
+  const audio = $("#audioPlayer");
+  audio.pause();
+  audio.removeAttribute("src");
+  audio.load();
+  $("#player").className = "";
+  state.playingId = null;
+  $$(".song.playing").forEach((el) => el.classList.remove("playing"));
+});
+
+$("#audioPlayer").addEventListener("ended", () => {
+  state.playingId = null;
+  $$(".song.playing").forEach((el) => el.classList.remove("playing"));
+});
+
+/* user dialog */
+function openUserDialog() {
+  $("#userPick").innerHTML = state.users.map((u) => `<button type="button" data-user="${esc(u)}">${esc(u)}</button>`).join("");
+  $("#userInput").value = state.user;
+  $("#userDlg").showModal();
+  $("#userInput").select();
+}
+$("#userChip").addEventListener("click", openUserDialog);
+$("#userPick").addEventListener("click", (e) => { if (e.target.dataset.user) $("#userInput").value = e.target.dataset.user; });
+$("#userForm").addEventListener("submit", guard(async (e) => {
+  e.preventDefault();
+  const name = $("#userInput").value.trim();
+  if (!name) return;
+  setUser(name);
+  $("#userDlg").close();
+  state.mood = null; state.results = []; applyTheme(null);
+  await loadMeta();
+  await loadUser();
+  renderMoodGrid(); renderResults();
+  await refreshActiveTab();
+}));
+$("#userDlg").addEventListener("cancel", (e) => { if (!state.user) e.preventDefault(); });   // must pick a name first
+
+/* ------------------------------------------------------------------ */
+/* start                                                               */
+/* ------------------------------------------------------------------ */
+(guard(async () => {
+  await loadMeta();
+  if (state.user) { setUser(state.user); await loadUser(); }
+  else openUserDialog();
+}))();
+</script>
+</body>
+</html>

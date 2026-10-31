@@ -1,0 +1,142 @@
+{
+    "Ekta Sharma": {
+        "favorites": [
+            "jamendo_171"
+        ],
+        "playlists": {},
+        "history": [
+            {
+                "song_id": 3,
+                "title": "Agar Tum Saath Ho",
+                "artist": "Alka Yagnik & Arijit Singh",
+                "mood": "Romantic",
+                "played_at": "2026-10-30T21:34:07"
+            },
+            {
+                "song_id": 1,
+                "title": "Ilahi",
+                "artist": "Arijit Singh",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:16:03"
+            },
+            {
+                "song_id": 1,
+                "title": "Ilahi",
+                "artist": "Arijit Singh",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:16:15"
+            },
+            {
+                "song_id": 1,
+                "title": "Ilahi",
+                "artist": "Arijit Singh",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:16:19"
+            },
+            {
+                "song_id": 2,
+                "title": "Love You Zindagi",
+                "artist": "Amit Trivedi",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:25:00"
+            },
+            {
+                "song_id": 12,
+                "title": "Thunder",
+                "artist": "Imagine Dragons",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:25:05"
+            },
+            {
+                "song_id": 1,
+                "title": "Ilahi",
+                "artist": "Arijit Singh",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:25:08"
+            },
+            {
+                "song_id": 2,
+                "title": "Love You Zindagi",
+                "artist": "Amit Trivedi",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:25:42"
+            },
+            {
+                "song_id": 7,
+                "title": "Lose Yourself",
+                "artist": "Eminem",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:28:41"
+            },
+            {
+                "song_id": 2,
+                "title": "Love You Zindagi",
+                "artist": "Amit Trivedi",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:32:09"
+            },
+            {
+                "song_id": 1,
+                "title": "Ilahi",
+                "artist": "Arijit Singh",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:44:39"
+            },
+            {
+                "song_id": 1,
+                "title": "Ilahi",
+                "artist": "Arijit Singh",
+                "mood": "Happy",
+                "played_at": "2026-10-30T23:44:40"
+            },
+            {
+                "song_id": "jamendo_171",
+                "title": "Apologies",
+                "artist": "TriFace",
+                "mood": "Happy",
+                "played_at": "2026-10-31T00:15:51"
+            },
+            {
+                "song_id": "jamendo_171",
+                "title": "Apologies",
+                "artist": "TriFace",
+                "mood": "Happy",
+                "played_at": "2026-10-31T00:16:01"
+            },
+            {
+                "song_id": "jamendo_171",
+                "title": "Apologies",
+                "artist": "TriFace",
+                "mood": "Happy",
+                "played_at": "2026-10-31T00:16:07"
+            },
+            {
+                "song_id": "jamendo_171",
+                "title": "Apologies",
+                "artist": "TriFace",
+                "mood": "Happy",
+                "played_at": "2026-10-31T00:16:10"
+            },
+            {
+                "song_id": "jamendo_169",
+                "title": "Trio HxC",
+                "artist": "TriFace",
+                "mood": "Happy",
+                "played_at": "2026-10-31T00:16:38"
+            }
+        ]
+    },
+    "test": {
+        "favorites": [],
+        "playlists": {},
+        "history": [
+            {
+                "song_id": "jamendo_168",
+                "title": "J'm'e FPM",
+                "artist": "TriFace",
+                "mood": "happy",
+                "played_at": "2026-10-31T00:14:43"
+            }
+        ]
+    }
+}
